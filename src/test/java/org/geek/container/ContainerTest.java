@@ -1,5 +1,7 @@
 package org.geek.container;
 
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -7,15 +9,13 @@ import static org.junit.Assert.*;
 
 public class ContainerTest {
 
-    interface Components {
 
+    Context context ;
+    @BeforeEach
+    public void setUp(){
+        context = new Context();
     }
 
-
-    static class ComponentsWithDefaultImplementation implements Components {
-        public ComponentsWithDefaultImplementation(){}
-
-    }
 
     @Nested
     public class ComponentConstruction {
@@ -29,7 +29,6 @@ public class ContainerTest {
             public void should_bind_type_to_specific_instance() {
                 final Components instance = new Components() {
                 };
-                Context context = new Context();
                 context.bind(Components.class, instance);
 
                 assertSame(instance, context.get(Components.class));
@@ -38,7 +37,6 @@ public class ContainerTest {
 
             @Test
             public void should_bind_type_to_a_class_whit_default() {
-                final Context context = new Context();
                 context.bind(Components.class, ComponentsWithDefaultImplementation.class );
                 final Components instance = context.get(Components.class);
                 assertNotNull(instance);
@@ -47,7 +45,18 @@ public class ContainerTest {
             }
 
             // TODO: 2022/11/6 with dependency
+            @Test
+            public void should_bind_type_to_a_class_whit_inject_constructor() {
+                final Dependency dependency = new Dependency() {
 
+                };
+                context.bind(Components.class, ComponentsWithInjectConstructor.class);
+                context.bind(Dependency.class, dependency);
+
+                final Components instance = context.get(Components.class);
+                assertNotNull(instance);
+                assertSame(dependency, ((ComponentsWithInjectConstructor) instance).getDependency());
+            }
 
             // TODO: 2022/11/6 A -> B -> C
 
@@ -70,5 +79,36 @@ public class ContainerTest {
     @Nested
     public class LifeCycleManagement {
 
+    }
+}
+
+
+interface Components {
+
+}
+
+interface Dependency{
+
+}
+
+class ComponentsWithDefaultImplementation implements Components {
+    public ComponentsWithDefaultImplementation(){}
+
+}
+
+class ComponentsWithInjectConstructor implements Components {
+
+    private Dependency dependency;
+
+    public ComponentsWithInjectConstructor(){}
+
+    @Inject
+    public ComponentsWithInjectConstructor(Dependency dependency){
+
+        this.dependency = dependency;
+    }
+
+    public Dependency getDependency() {
+        return dependency;
     }
 }

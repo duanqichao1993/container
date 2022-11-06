@@ -24,7 +24,6 @@ public class ContainerTest {
         // TODO: interface
         @Nested
         public class ConstructorInjection {
-            // TODO: 2022/11/6 no args constructor
             @Test
             public void should_bind_type_to_specific_instance() {
                 final Components instance = new Components() {
@@ -44,7 +43,6 @@ public class ContainerTest {
 
             }
 
-            // TODO: 2022/11/6 with dependency
             @Test
             public void should_bind_type_to_a_class_whit_inject_constructor() {
                 final Dependency dependency = new Dependency() {
@@ -59,7 +57,22 @@ public class ContainerTest {
             }
 
             // TODO: 2022/11/6 A -> B -> C
+            @Test
+            public void should_bind_type_to_transitive_dependency() {
+                context.bind(Components.class, ComponentsWithInjectConstructor.class);
+                context.bind(Dependency.class, DependencyWhitInjectConstructor.class);
+                context.bind(String.class,"indirect dependencies");
 
+                final Components instance = context.get(Components.class);
+                assertNotNull(instance);
+
+                final Dependency dependency = ((ComponentsWithInjectConstructor) instance).getDependency();
+                assertNotNull(dependency);
+
+                assertSame("indirect dependencies" , ((DependencyWhitInjectConstructor)dependency).getDependency());
+
+
+            }
 
         }
 
@@ -109,6 +122,23 @@ class ComponentsWithInjectConstructor implements Components {
     }
 
     public Dependency getDependency() {
+        return dependency;
+    }
+}
+
+
+class DependencyWhitInjectConstructor implements Dependency{
+    String dependency;
+
+    public DependencyWhitInjectConstructor(){};
+
+
+    @Inject
+    public DependencyWhitInjectConstructor(String dependency) {
+        this.dependency = dependency;
+    }
+
+    public String getDependency( ) {
         return dependency;
     }
 }

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ContainerTest {
 
@@ -74,6 +75,20 @@ public class ContainerTest {
 
             }
 
+            @Test
+            public void should_throw_exception_if_with_multi_inject_constructor(){
+                assertThrows(IllegalsComponentException.class, ()->{
+                    context.bind(Components.class, ComponentWithMultiInjectConstructor.class);
+                });
+            }
+            
+            @Test
+            public void should_throw_exception_if_no_inject_nor_no_default_constructor_provided() {
+                assertThrows(IllegalsComponentException.class, () -> {
+                    context.bind(Components.class, ComponentWithNoInjectNorDefaultConstructorProvided.class);
+                });
+
+            }
         }
 
         @Nested
@@ -140,5 +155,23 @@ class DependencyWhitInjectConstructor implements Dependency{
 
     public String getDependency( ) {
         return dependency;
+    }
+}
+
+class ComponentWithMultiInjectConstructor implements Components {
+
+    @Inject
+    public ComponentWithMultiInjectConstructor(String str , Double value){
+
+    }
+
+    @Inject
+    public ComponentWithMultiInjectConstructor(String str) {
+    }
+}
+
+class ComponentWithNoInjectNorDefaultConstructorProvided implements  Components {
+
+    public ComponentWithNoInjectNorDefaultConstructorProvided(String name) {
     }
 }

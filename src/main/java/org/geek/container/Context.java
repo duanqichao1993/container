@@ -4,12 +4,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static java.util.Arrays.stream;
 
 public class Context {
 
@@ -25,16 +24,18 @@ public class Context {
         final Constructor<TypeImplementation> constructor = getInjectConstructor(implementationClass);
         providers.put(componentsClass, (Provider<Type>) () -> {
             try {
-                final Object[] dependencies = Arrays.stream(constructor.getParameters()).map(p -> get(p.getType())).toArray(Object[]::new);
+                final Object[] dependencies = stream(constructor.getParameters())
+                        .map(p -> get(p.getType()).orElseThrow(DependencyNotFindException::new))
+                        .toArray(Object[]::new);
                 return (Type) constructor.newInstance(dependencies);
-            } catch (Exception e) {
+            } catch (IllegalAccessException | InstantiationException | InvocationTargetException  e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
     private <Type> Constructor<Type> getInjectConstructor(Class<Type> implementationClass) {
-        final List<Constructor<?>> injectConstructor = Arrays.stream(implementationClass.getConstructors())
+        final List<Constructor<?>> injectConstructor = stream(implementationClass.getConstructors())
                 .filter(c -> c.isAnnotationPresent(Inject.class)).collect(Collectors.toList());
         if (injectConstructor.size() > 1) {
             throw new IllegalsComponentException();
@@ -50,8 +51,7 @@ public class Context {
     }
 
 
-    public <Type> Type get(Class<Type> type) {
-        return (Type) providers.get(type).get();
+    public <Type> Optional<Type> get(Class<Type> type) {
+        return Optional.ofNullable(providers.get(type)).map(provider -> (Type)provider.get());
     }
-
 }
